@@ -1,6 +1,8 @@
 package com.ouroboros.auth.adapter.in.web;
 
 import com.ouroboros.auth.application.EmailAlreadyUsedException;
+import com.ouroboros.auth.application.InvalidCredentialsException;
+import com.ouroboros.auth.application.InvalidRefreshTokenException;
 import com.ouroboros.auth.domain.WeakPasswordException;
 import com.ouroboros.shared.ApiError;
 import jakarta.servlet.http.HttpServletRequest;
@@ -25,6 +27,12 @@ public class ApiExceptionHandler {
   public ResponseEntity<ApiError> handleWeakPassword(
       WeakPasswordException ex, HttpServletRequest request) {
     return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request, List.of());
+  }
+
+  @ExceptionHandler({InvalidCredentialsException.class, InvalidRefreshTokenException.class})
+  public ResponseEntity<ApiError> handleUnauthorized(
+      RuntimeException ex, HttpServletRequest request) {
+    return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, List.of());
   }
 
   @ExceptionHandler(MethodArgumentNotValidException.class)

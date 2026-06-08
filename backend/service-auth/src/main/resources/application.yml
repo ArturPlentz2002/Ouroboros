@@ -15,6 +15,12 @@ spring:
   flyway:
     enabled: true
 
+ouroboros:
+  jwt:
+    issuer: ouroboros-auth
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
+
 management:
   endpoints:
     web:

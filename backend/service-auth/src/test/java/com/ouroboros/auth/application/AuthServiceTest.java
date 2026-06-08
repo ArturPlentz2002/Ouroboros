@@ -10,6 +10,9 @@ import static org.mockito.Mockito.when;
 import com.ouroboros.auth.adapter.out.persistence.UserRepository;
 import com.ouroboros.auth.domain.User;
 import com.ouroboros.auth.domain.WeakPasswordException;
+import java.time.Instant;
+import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -23,6 +26,8 @@ class AuthServiceTest {
 
   @Mock private UserRepository users;
   @Mock private PasswordEncoder passwordEncoder;
+  @Mock private TokenService tokenService;
+  @Mock private RefreshTokenService refreshTokenService;
   @InjectMocks private AuthService authService;
 
   @Test
@@ -57,5 +62,57 @@ class AuthServiceTest {
         .isInstanceOf(WeakPasswordException.class);
 
     verify(users, never()).save(any());
+  }
+
+  @Test
+  void loginComCredenciaisValidasEmiteTokens() {
+    UUID userId = UUID.randomUUID();
+    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    when(users.findByEmail("ana@ouroboros.dev")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("password1", "HASH")).thenReturn(true);
+    when(tokenService.issueAccessToken(userId, "ana@ouroboros.dev")).thenReturn("ACCESS");
+    when(refreshTokenService.issue(userId)).thenReturn("REFRESH");
+    when(tokenService.accessTokenTtlSeconds()).thenReturn(900L);
+
+    TokenPair pair = authService.login("Ana@Ouroboros.DEV", "password1");
+
+    assertThat(pair.accessToken()).isEqualTo("ACCESS");
+    assertThat(pair.refreshToken()).isEqualTo("REFRESH");
+    assertThat(pair.expiresInSeconds()).isEqualTo(900L);
+  }
+
+  @Test
+  void loginComSenhaErradaLanca() {
+    UUID userId = UUID.randomUUID();
+    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    when(users.findByEmail("ana@ouroboros.dev")).thenReturn(Optional.of(user));
+    when(passwordEncoder.matches("errada", "HASH")).thenReturn(false);
+
+    assertThatThrownBy(() -> authService.login("ana@ouroboros.dev", "errada"))
+        .isInstanceOf(InvalidCredentialsException.class);
+  }
+
+  @Test
+  void loginComEmailInexistenteLanca() {
+    when(users.findByEmail("x@ouroboros.dev")).thenReturn(Optional.empty());
+
+    assertThatThrownBy(() -> authService.login("x@ouroboros.dev", "password1"))
+        .isInstanceOf(InvalidCredentialsException.class);
+  }
+
+  @Test
+  void refreshRotacionaEEmiteNovoAccessToken() {
+    UUID userId = UUID.randomUUID();
+    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    when(refreshTokenService.rotate("OLD"))
+        .thenReturn(new RefreshTokenService.Rotation(userId, "NEW_REFRESH"));
+    when(users.findById(userId)).thenReturn(Optional.of(user));
+    when(tokenService.issueAccessToken(userId, "ana@ouroboros.dev")).thenReturn("NEW_ACCESS");
+    when(tokenService.accessTokenTtlSeconds()).thenReturn(900L);
+
+    TokenPair pair = authService.refresh("OLD");
+
+    assertThat(pair.accessToken()).isEqualTo("NEW_ACCESS");
+    assertThat(pair.refreshToken()).isEqualTo("NEW_REFRESH");
   }
 }
