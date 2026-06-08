@@ -64,6 +64,12 @@ public class RefreshTokenService {
     return new Rotation(current.getUserId(), newRawToken);
   }
 
+  /** Revoga (invalida) um refresh token, se existir. Idempotente. */
+  @Transactional
+  public void revoke(String rawToken) {
+    repository.consumeByTokenHash(hash(rawToken));
+  }
+
   private String generateRawToken() {
     byte[] bytes = new byte[32];
     secureRandom.nextBytes(bytes);

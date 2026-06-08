@@ -88,6 +88,13 @@ class RefreshTokenServiceTest {
   }
 
   @Test
+  void revokeConsomeToken() {
+    service.revoke("raw");
+
+    verify(repository).consumeByTokenHash(anyString());
+  }
+
+  @Test
   void rotatePerdeCorridaQuandoJaConsumido() {
     UUID userId = UUID.randomUUID();
     when(repository.findByTokenHash(anyString()))
