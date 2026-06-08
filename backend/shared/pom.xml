@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.ouroboros</groupId>
+    <artifactId>ouroboros-backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>shared</artifactId>
+  <name>shared</name>
+  <description>Biblioteca comum: constantes, modelo de erro e utilitarios reaproveitaveis entre servicos</description>
+
+  <!-- Biblioteca (jar), nao e uma aplicacao bootable: sem spring-boot-maven-plugin. -->
+
+</project>

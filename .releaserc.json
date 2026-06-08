@@ -5,7 +5,7 @@
     "@semantic-release/release-notes-generator",
     ["@semantic-release/changelog", { "changelogFile": "CHANGELOG.md" }],
     ["@semantic-release/exec", {
-      "prepareCmd": "mvn -B versions:set -DnewVersion=${nextRelease.version} -DgenerateBackupPoms=false"
+      "prepareCmd": "mvn -B -f backend/pom.xml versions:set -DnewVersion=${nextRelease.version} -DgenerateBackupPoms=false -DprocessAllModules=true"
     }],
     ["@semantic-release/git", {
       "assets": ["CHANGELOG.md", "**/pom.xml"],
