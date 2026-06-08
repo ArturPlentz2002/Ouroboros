@@ -45,6 +45,21 @@ services:
       service-auth:
         condition: service_started
 
+  service-user:
+    build:
+      context: ../backend
+      dockerfile: service-user/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/users
+      SPRING_DATASOURCE_USERNAME: ouroboros
+      SPRING_DATASOURCE_PASSWORD: ouroboros
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-auth:
+        condition: service_started
+
   gateway:
     build:
       context: ../backend
@@ -52,6 +67,7 @@ services:
     environment:
       SERVICE_AUTH_URI: http://service-auth:8081
       SERVICE_AGENDA_URI: http://service-agenda:8082
+      SERVICE_USER_URI: http://service-user:8083
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     ports:
       # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
@@ -60,6 +76,8 @@ services:
       service-auth:
         condition: service_started
       service-agenda:
+        condition: service_started
+      service-user:
         condition: service_started
 
 volumes:

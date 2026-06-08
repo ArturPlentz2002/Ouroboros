@@ -2,3 +2,4 @@
 -- Executado apenas na primeira inicializacao do volume do Postgres.
 CREATE DATABASE auth;
 CREATE DATABASE agenda;
+CREATE DATABASE users;
