@@ -48,16 +48,20 @@ public class RefreshTokenService {
    */
   @Transactional
   public Rotation rotate(String rawToken) {
+    String tokenHash = hash(rawToken);
     RefreshToken current =
-        repository.findByTokenHash(hash(rawToken)).orElseThrow(InvalidRefreshTokenException::new);
+        repository.findByTokenHash(tokenHash).orElseThrow(InvalidRefreshTokenException::new);
     if (current.getExpiresAt().isBefore(Instant.now())) {
-      repository.delete(current);
+      repository.consumeByTokenHash(tokenHash);
       throw new InvalidRefreshTokenException();
     }
-    UUID userId = current.getUserId();
-    repository.delete(current);
-    String newRawToken = issue(userId);
-    return new Rotation(userId, newRawToken);
+    // Consumo atomico: em corrida concorrente, so uma transacao deleta a linha (retorna 1);
+    // as demais recebem 0 e falham, garantindo rotacao de uso unico.
+    if (repository.consumeByTokenHash(tokenHash) == 0) {
+      throw new InvalidRefreshTokenException();
+    }
+    String newRawToken = issue(current.getUserId());
+    return new Rotation(current.getUserId(), newRawToken);
   }
 
   private String generateRawToken() {
