@@ -1,0 +1,66 @@
+# Stack completa: Postgres + service-auth + service-agenda + gateway.
+# Subir com: docker compose -f infra/docker-compose.yml up --build
+# Apenas o gateway expoe porta no host; os servicos conversam pela rede interna.
+services:
+  postgres:
+    image: postgres:16
+    container_name: ouroboros-postgres
+    environment:
+      POSTGRES_USER: ouroboros
+      POSTGRES_PASSWORD: ouroboros
+      POSTGRES_DB: ouroboros
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ouroboros"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  service-auth:
+    build:
+      context: ../backend
+      dockerfile: service-auth/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/auth
+      SPRING_DATASOURCE_USERNAME: ouroboros
+      SPRING_DATASOURCE_PASSWORD: ouroboros
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  service-agenda:
+    build:
+      context: ../backend
+      dockerfile: service-agenda/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/agenda
+      SPRING_DATASOURCE_USERNAME: ouroboros
+      SPRING_DATASOURCE_PASSWORD: ouroboros
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-auth:
+        condition: service_started
+
+  gateway:
+    build:
+      context: ../backend
+      dockerfile: gateway/Dockerfile
+    environment:
+      SERVICE_AUTH_URI: http://service-auth:8081
+      SERVICE_AGENDA_URI: http://service-agenda:8082
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    ports:
+      # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
+      - "${GATEWAY_HOST_PORT:-8080}:8080"
+    depends_on:
+      service-auth:
+        condition: service_started
+      service-agenda:
+        condition: service_started
+
+volumes:
+  pgdata:

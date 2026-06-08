@@ -66,19 +66,42 @@ npm install   # instala husky + commitlint e ativa o hook commit-msg
 
 ### 3. Subir a aplicacao (Docker)
 
-> Disponivel ao final da Fase 1 (DDE-020 e DDE-029). Resumo do fluxo previsto:
->
-> ```bash
-> # dependencias (Postgres) para desenvolvimento local
-> docker compose -f infra/docker-compose.deps.yml up -d
->
-> # stack completa (postgres + auth + agenda + gateway)
-> docker compose -f infra/docker-compose.yml up --build
-> ```
->
-> Fluxo de autenticacao (via gateway em :8080): `POST /auth/register` ->
-> `POST /auth/login` (recebe access+refresh) -> chamadas a `/api/v1/agenda/**`
-> com `Authorization: Bearer <access>` -> `POST /auth/refresh` quando expirar.
+```bash
+# apenas as dependencias (Postgres) para rodar os servicos pela IDE
+docker compose -f infra/docker-compose.deps.yml up -d
+
+# stack completa (postgres + service-auth + service-agenda + gateway)
+docker compose -f infra/docker-compose.yml up --build
+```
+
+Apenas o **gateway** expoe porta no host (`8080`); os servicos conversam pela rede
+interna. Se a porta 8080 estiver ocupada, defina `GATEWAY_HOST_PORT` (e
+`POSTGRES_HOST_PORT` para o compose de dependencias).
+
+### 4. Fluxo de autenticacao (via gateway em `:8080`)
+
+```bash
+# 1. registrar
+curl -X POST localhost:8080/auth/register \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"voce@ouroboros.dev","password":"password1"}'
+
+# 2. logar -> recebe accessToken + refreshToken
+curl -X POST localhost:8080/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"voce@ouroboros.dev","password":"password1"}'
+
+# 3. criar evento (autenticado)
+curl -X POST localhost:8080/api/v1/agenda/events \
+  -H "Authorization: Bearer <accessToken>" \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Jantar","startsAt":"2026-07-01T20:00:00Z"}'
+
+# 4. renovar tokens quando o access expirar
+curl -X POST localhost:8080/auth/refresh \
+  -H 'Content-Type: application/json' \
+  -d '{"refreshToken":"<refreshToken>"}'
+```
 
 ## Convencoes de contribuicao
 
