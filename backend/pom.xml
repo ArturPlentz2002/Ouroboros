@@ -22,6 +22,7 @@
     <module>shared</module>
     <module>service-auth</module>
     <module>service-agenda</module>
+    <module>gateway</module>
   </modules>
 
   <properties>

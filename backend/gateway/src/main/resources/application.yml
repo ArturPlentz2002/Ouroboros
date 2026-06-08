@@ -1,0 +1,38 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: service-auth
+          uri: ${SERVICE_AUTH_URI:http://localhost:8081}
+          predicates:
+            - Path=/auth/**,/oauth2/jwks
+        - id: service-agenda
+          uri: ${SERVICE_AGENDA_URI:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/agenda/**
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:*"
+            allowedMethods:
+              - "*"
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
