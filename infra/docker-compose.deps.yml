@@ -1,0 +1,25 @@
+# Dependencias locais de desenvolvimento (DBs/brokers).
+# Suba antes de rodar os servicos pela IDE: docker compose -f infra/docker-compose.deps.yml up -d
+services:
+  postgres:
+    image: postgres:16
+    container_name: ouroboros-postgres
+    environment:
+      POSTGRES_USER: ouroboros
+      POSTGRES_PASSWORD: ouroboros
+      POSTGRES_DB: ouroboros
+    ports:
+      # Porta do host parametrizavel para conviver com um Postgres local na 5432.
+      # Default 5432; sobrescreva com POSTGRES_HOST_PORT se a porta estiver ocupada.
+      - "${POSTGRES_HOST_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ouroboros"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  pgdata:
