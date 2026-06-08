@@ -20,6 +20,7 @@
 
   <modules>
     <module>shared</module>
+    <module>service-auth</module>
   </modules>
 
   <properties>
@@ -28,6 +29,9 @@
     <spring-cloud.version>2023.0.3</spring-cloud.version>
     <mapstruct.version>1.6.2</mapstruct.version>
     <spotless.version>2.43.0</spotless.version>
+    <!-- Override da versao gerenciada pelo Boot: 1.21.x traz docker-java 3.5.x,
+         compativel com daemons Docker novos (API >= 1.44). A 1.19/1.20 envia 1.32. -->
+    <testcontainers.version>1.21.3</testcontainers.version>
   </properties>
 
   <dependencyManagement>
@@ -91,6 +95,26 @@
             <phase>verify</phase>
             <goals>
               <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <!-- Roda os testes de integracao (*IT) na fase verify (Surefire so roda *Test). -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <configuration>
+          <environmentVariables>
+            <!-- docker-java envia API 1.32 por padrao; daemons Docker modernos
+                 (25+) exigem API >= 1.44. Fixa a versao para o cliente do Testcontainers. -->
+            <DOCKER_API_VERSION>1.44</DOCKER_API_VERSION>
+          </environmentVariables>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
             </goals>
           </execution>
         </executions>
