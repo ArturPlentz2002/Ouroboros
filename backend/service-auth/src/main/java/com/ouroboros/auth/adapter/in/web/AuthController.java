@@ -4,6 +4,7 @@ import com.ouroboros.auth.adapter.in.web.dto.LoginRequest;
 import com.ouroboros.auth.adapter.in.web.dto.RefreshRequest;
 import com.ouroboros.auth.adapter.in.web.dto.RegisterRequest;
 import com.ouroboros.auth.adapter.in.web.dto.RegisterResponse;
+import com.ouroboros.auth.adapter.in.web.dto.SocialLoginRequest;
 import com.ouroboros.auth.adapter.in.web.dto.TokenResponse;
 import com.ouroboros.auth.application.AuthService;
 import com.ouroboros.auth.application.RegisteredUser;
@@ -36,6 +37,12 @@ public class AuthController {
   @PostMapping("/login")
   public ResponseEntity<TokenResponse> login(@Valid @RequestBody LoginRequest request) {
     TokenPair tokens = authService.login(request.email(), request.password());
+    return ResponseEntity.ok(toResponse(tokens));
+  }
+
+  @PostMapping("/social")
+  public ResponseEntity<TokenResponse> social(@Valid @RequestBody SocialLoginRequest request) {
+    TokenPair tokens = authService.loginWithSocial(request.provider(), request.idToken());
     return ResponseEntity.ok(toResponse(tokens));
   }
 

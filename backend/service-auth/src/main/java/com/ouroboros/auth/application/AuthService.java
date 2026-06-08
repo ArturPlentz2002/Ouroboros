@@ -2,9 +2,13 @@ package com.ouroboros.auth.application;
 
 import com.ouroboros.auth.adapter.out.persistence.UserRepository;
 import com.ouroboros.auth.application.RefreshTokenService.Rotation;
+import com.ouroboros.auth.application.social.SocialIdTokenVerifier;
+import com.ouroboros.auth.application.social.SocialIdentity;
+import com.ouroboros.auth.application.social.UnsupportedSocialProviderException;
 import com.ouroboros.auth.domain.PasswordPolicy;
 import com.ouroboros.auth.domain.User;
 import java.time.Instant;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -19,16 +23,19 @@ public class AuthService {
   private final PasswordEncoder passwordEncoder;
   private final TokenService tokenService;
   private final RefreshTokenService refreshTokenService;
+  private final List<SocialIdTokenVerifier> socialVerifiers;
 
   public AuthService(
       UserRepository users,
       PasswordEncoder passwordEncoder,
       TokenService tokenService,
-      RefreshTokenService refreshTokenService) {
+      RefreshTokenService refreshTokenService,
+      List<SocialIdTokenVerifier> socialVerifiers) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
+    this.socialVerifiers = socialVerifiers;
   }
 
   /**
@@ -45,7 +52,7 @@ public class AuthService {
       throw new EmailAlreadyUsedException(normalizedEmail);
     }
     User user =
-        new User(
+        User.local(
             UUID.randomUUID(), normalizedEmail, passwordEncoder.encode(rawPassword), Instant.now());
     users.save(user);
     return new RegisteredUser(user.getId(), user.getEmail());
@@ -54,15 +61,49 @@ public class AuthService {
   /**
    * Autentica por e-mail/senha e emite access + refresh tokens.
    *
-   * @throws InvalidCredentialsException se o e-mail nao existir ou a senha nao conferir
+   * @throws InvalidCredentialsException se o e-mail nao existir, for conta social, ou a senha nao
+   *     conferir
    */
   @Transactional
   public TokenPair login(String email, String rawPassword) {
     User user =
         users.findByEmail(normalizeEmail(email)).orElseThrow(InvalidCredentialsException::new);
-    if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
+    if (user.getPasswordHash() == null
+        || !passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
       throw new InvalidCredentialsException();
     }
+    return issueTokens(user.getId(), user.getEmail());
+  }
+
+  /**
+   * Autentica via login social: valida o ID token do provedor, cria/associa o usuario (por e-mail)
+   * e emite o JWT do Ouroboros.
+   *
+   * @throws UnsupportedSocialProviderException se o provedor nao for suportado
+   * @throws com.ouroboros.auth.application.social.InvalidSocialTokenException se o token for
+   *     invalido
+   */
+  @Transactional
+  public TokenPair loginWithSocial(String provider, String idToken) {
+    SocialIdTokenVerifier verifier =
+        socialVerifiers.stream()
+            .filter(v -> v.provider().equalsIgnoreCase(provider))
+            .findFirst()
+            .orElseThrow(() -> new UnsupportedSocialProviderException(provider));
+    SocialIdentity identity = verifier.verify(idToken);
+    String email = normalizeEmail(identity.email());
+    User user =
+        users
+            .findByEmail(email)
+            .orElseGet(
+                () ->
+                    users.save(
+                        User.social(
+                            UUID.randomUUID(),
+                            email,
+                            identity.provider(),
+                            identity.externalId(),
+                            Instant.now())));
     return issueTokens(user.getId(), user.getEmail());
   }
 
