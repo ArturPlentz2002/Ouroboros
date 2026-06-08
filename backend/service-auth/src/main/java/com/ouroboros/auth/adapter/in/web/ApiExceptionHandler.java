@@ -3,6 +3,8 @@ package com.ouroboros.auth.adapter.in.web;
 import com.ouroboros.auth.application.EmailAlreadyUsedException;
 import com.ouroboros.auth.application.InvalidCredentialsException;
 import com.ouroboros.auth.application.InvalidRefreshTokenException;
+import com.ouroboros.auth.application.social.InvalidSocialTokenException;
+import com.ouroboros.auth.application.social.UnsupportedSocialProviderException;
 import com.ouroboros.auth.domain.WeakPasswordException;
 import com.ouroboros.shared.ApiError;
 import com.ouroboros.shared.web.AbstractApiExceptionHandler;
@@ -29,9 +31,19 @@ public class ApiExceptionHandler extends AbstractApiExceptionHandler {
     return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request, List.of());
   }
 
-  @ExceptionHandler({InvalidCredentialsException.class, InvalidRefreshTokenException.class})
+  @ExceptionHandler({
+    InvalidCredentialsException.class,
+    InvalidRefreshTokenException.class,
+    InvalidSocialTokenException.class
+  })
   public ResponseEntity<ApiError> handleUnauthorized(
       RuntimeException ex, HttpServletRequest request) {
     return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, List.of());
+  }
+
+  @ExceptionHandler(UnsupportedSocialProviderException.class)
+  public ResponseEntity<ApiError> handleUnsupportedProvider(
+      UnsupportedSocialProviderException ex, HttpServletRequest request) {
+    return build(HttpStatus.BAD_REQUEST, ex.getMessage(), request, List.of());
   }
 }

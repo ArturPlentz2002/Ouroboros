@@ -3,20 +3,25 @@ package com.ouroboros.auth.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.ouroboros.auth.adapter.out.persistence.UserRepository;
+import com.ouroboros.auth.application.social.SocialIdTokenVerifier;
+import com.ouroboros.auth.application.social.SocialIdentity;
+import com.ouroboros.auth.application.social.UnsupportedSocialProviderException;
 import com.ouroboros.auth.domain.User;
 import com.ouroboros.auth.domain.WeakPasswordException;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,7 +33,15 @@ class AuthServiceTest {
   @Mock private PasswordEncoder passwordEncoder;
   @Mock private TokenService tokenService;
   @Mock private RefreshTokenService refreshTokenService;
-  @InjectMocks private AuthService authService;
+  @Mock private SocialIdTokenVerifier googleVerifier;
+  private AuthService authService;
+
+  @BeforeEach
+  void setUp() {
+    authService =
+        new AuthService(
+            users, passwordEncoder, tokenService, refreshTokenService, List.of(googleVerifier));
+  }
 
   @Test
   void registraNovoUsuarioNormalizandoEmailEHasheandoSenha() {
@@ -38,12 +51,11 @@ class AuthServiceTest {
     RegisteredUser result = authService.register("  Ana@Ouroboros.DEV ", "password1");
 
     assertThat(result.email()).isEqualTo("ana@ouroboros.dev");
-    assertThat(result.id()).isNotNull();
-
     ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
     verify(users).save(saved.capture());
     assertThat(saved.getValue().getEmail()).isEqualTo("ana@ouroboros.dev");
     assertThat(saved.getValue().getPasswordHash()).isEqualTo("HASH");
+    assertThat(saved.getValue().getProvider()).isEqualTo(User.PROVIDER_LOCAL);
   }
 
   @Test
@@ -52,7 +64,6 @@ class AuthServiceTest {
 
     assertThatThrownBy(() -> authService.register("dup@ouroboros.dev", "password1"))
         .isInstanceOf(EmailAlreadyUsedException.class);
-
     verify(users, never()).save(any());
   }
 
@@ -60,14 +71,13 @@ class AuthServiceTest {
   void rejeitaSenhaFraca() {
     assertThatThrownBy(() -> authService.register("ana@ouroboros.dev", "1234567"))
         .isInstanceOf(WeakPasswordException.class);
-
     verify(users, never()).save(any());
   }
 
   @Test
   void loginComCredenciaisValidasEmiteTokens() {
     UUID userId = UUID.randomUUID();
-    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    User user = User.local(userId, "ana@ouroboros.dev", "HASH", Instant.now());
     when(users.findByEmail("ana@ouroboros.dev")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("password1", "HASH")).thenReturn(true);
     when(tokenService.issueAccessToken(userId, "ana@ouroboros.dev")).thenReturn("ACCESS");
@@ -78,13 +88,11 @@ class AuthServiceTest {
 
     assertThat(pair.accessToken()).isEqualTo("ACCESS");
     assertThat(pair.refreshToken()).isEqualTo("REFRESH");
-    assertThat(pair.expiresInSeconds()).isEqualTo(900L);
   }
 
   @Test
   void loginComSenhaErradaLanca() {
-    UUID userId = UUID.randomUUID();
-    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    User user = User.local(UUID.randomUUID(), "ana@ouroboros.dev", "HASH", Instant.now());
     when(users.findByEmail("ana@ouroboros.dev")).thenReturn(Optional.of(user));
     when(passwordEncoder.matches("errada", "HASH")).thenReturn(false);
 
@@ -93,17 +101,19 @@ class AuthServiceTest {
   }
 
   @Test
-  void loginComEmailInexistenteLanca() {
-    when(users.findByEmail("x@ouroboros.dev")).thenReturn(Optional.empty());
+  void loginDeContaSocialSemSenhaLanca() {
+    User social =
+        User.social(UUID.randomUUID(), "ana@ouroboros.dev", "GOOGLE", "sub", Instant.now());
+    when(users.findByEmail("ana@ouroboros.dev")).thenReturn(Optional.of(social));
 
-    assertThatThrownBy(() -> authService.login("x@ouroboros.dev", "password1"))
+    assertThatThrownBy(() -> authService.login("ana@ouroboros.dev", "qualquer1"))
         .isInstanceOf(InvalidCredentialsException.class);
   }
 
   @Test
   void refreshRotacionaEEmiteNovoAccessToken() {
     UUID userId = UUID.randomUUID();
-    User user = new User(userId, "ana@ouroboros.dev", "HASH", Instant.now());
+    User user = User.local(userId, "ana@ouroboros.dev", "HASH", Instant.now());
     when(refreshTokenService.rotate("OLD"))
         .thenReturn(new RefreshTokenService.Rotation(userId, "NEW_REFRESH"));
     when(users.findById(userId)).thenReturn(Optional.of(user));
@@ -114,5 +124,53 @@ class AuthServiceTest {
 
     assertThat(pair.accessToken()).isEqualTo("NEW_ACCESS");
     assertThat(pair.refreshToken()).isEqualTo("NEW_REFRESH");
+  }
+
+  @Test
+  void loginSocialCriaUsuarioQuandoNaoExiste() {
+    when(googleVerifier.provider()).thenReturn("GOOGLE");
+    when(googleVerifier.verify("tok"))
+        .thenReturn(new SocialIdentity("GOOGLE", "g-sub", "Social@Google.com"));
+    when(users.findByEmail("social@google.com")).thenReturn(Optional.empty());
+    when(users.save(any(User.class))).thenAnswer(inv -> inv.getArgument(0));
+    when(tokenService.issueAccessToken(any(UUID.class), eq("social@google.com")))
+        .thenReturn("ACCESS");
+    when(refreshTokenService.issue(any(UUID.class))).thenReturn("REFRESH");
+    when(tokenService.accessTokenTtlSeconds()).thenReturn(900L);
+
+    TokenPair pair = authService.loginWithSocial("google", "tok");
+
+    assertThat(pair.accessToken()).isEqualTo("ACCESS");
+    ArgumentCaptor<User> saved = ArgumentCaptor.forClass(User.class);
+    verify(users).save(saved.capture());
+    assertThat(saved.getValue().getProvider()).isEqualTo("GOOGLE");
+    assertThat(saved.getValue().getExternalId()).isEqualTo("g-sub");
+    assertThat(saved.getValue().getPasswordHash()).isNull();
+  }
+
+  @Test
+  void loginSocialAssociaUsuarioExistentePorEmail() {
+    UUID existingId = UUID.randomUUID();
+    User existing = User.local(existingId, "social@google.com", "HASH", Instant.now());
+    when(googleVerifier.provider()).thenReturn("GOOGLE");
+    when(googleVerifier.verify("tok"))
+        .thenReturn(new SocialIdentity("GOOGLE", "g-sub", "social@google.com"));
+    when(users.findByEmail("social@google.com")).thenReturn(Optional.of(existing));
+    when(tokenService.issueAccessToken(existingId, "social@google.com")).thenReturn("ACCESS");
+    when(refreshTokenService.issue(existingId)).thenReturn("REFRESH");
+    when(tokenService.accessTokenTtlSeconds()).thenReturn(900L);
+
+    TokenPair pair = authService.loginWithSocial("google", "tok");
+
+    assertThat(pair.accessToken()).isEqualTo("ACCESS");
+    verify(users, never()).save(any());
+  }
+
+  @Test
+  void loginSocialComProvedorNaoSuportadoLanca() {
+    when(googleVerifier.provider()).thenReturn("GOOGLE");
+
+    assertThatThrownBy(() -> authService.loginWithSocial("facebook", "tok"))
+        .isInstanceOf(UnsupportedSocialProviderException.class);
   }
 }

@@ -21,6 +21,11 @@ ouroboros:
     audience: ouroboros
     access-token-ttl: PT15M
     refresh-token-ttl: P30D
+  social:
+    google:
+      # Client ID OAuth do Google (audience esperado no ID token). Vazio = nao valida aud.
+      client-id: ${GOOGLE_CLIENT_ID:}
+      jwks-uri: https://www.googleapis.com/oauth2/v3/certs
 
 management:
   endpoints:
