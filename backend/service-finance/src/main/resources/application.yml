@@ -1,0 +1,29 @@
+server:
+  port: ${SERVER_PORT:8084}
+
+spring:
+  application:
+    name: service-finance
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/finance}
+    username: ${SPRING_DATASOURCE_USERNAME:ouroboros}
+    password: ${SPRING_DATASOURCE_PASSWORD:ouroboros}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
