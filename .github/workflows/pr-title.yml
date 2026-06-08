@@ -1,0 +1,30 @@
+name: PR Title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  validate:
+    name: validate-pr-title
+    runs-on: ubuntu-latest
+    steps:
+      # Valida que o titulo do PR segue Conventional Commits com escopo (o ticket DDE),
+      # pois no squash merge o titulo do PR vira o commit lido pelo semantic-release.
+      - uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            chore
+            refactor
+            test
+            docs
+            ci
+            perf
+          requireScope: true
