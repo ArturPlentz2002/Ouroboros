@@ -20,6 +20,9 @@ spring:
         jwt:
           # Valida o JWT localmente buscando a chave publica (JWKS) do service-auth.
           jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          # Exige que o token seja destinado a plataforma Ouroboros.
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
 
 management:
   endpoints:

@@ -30,6 +30,8 @@ spring:
       resourceserver:
         jwt:
           jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
 
 management:
   endpoints:

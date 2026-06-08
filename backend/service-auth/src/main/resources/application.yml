@@ -18,6 +18,7 @@ spring:
 ouroboros:
   jwt:
     issuer: ouroboros-auth
+    audience: ouroboros
     access-token-ttl: PT15M
     refresh-token-ttl: P30D
 

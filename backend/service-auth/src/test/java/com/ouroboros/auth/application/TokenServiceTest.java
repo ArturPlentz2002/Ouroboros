@@ -35,7 +35,8 @@ class TokenServiceTest {
         new RSAKey.Builder(publicKey).privateKey(keyPair.getPrivate()).keyID("test").build();
     JWKSource<SecurityContext> jwkSource = new ImmutableJWKSet<>(new JWKSet(rsaKey));
     JwtEncoder encoder = new NimbusJwtEncoder(jwkSource);
-    this.tokenService = new TokenService(encoder, "ouroboros-auth", Duration.ofMinutes(15));
+    this.tokenService =
+        new TokenService(encoder, "ouroboros-auth", "ouroboros", Duration.ofMinutes(15));
     this.decoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
   }
 
@@ -49,6 +50,7 @@ class TokenServiceTest {
     assertThat(jwt.getSubject()).isEqualTo(userId.toString());
     assertThat(jwt.getClaimAsString("email")).isEqualTo("ana@ouroboros.dev");
     assertThat(jwt.getClaimAsString("iss")).isEqualTo("ouroboros-auth");
+    assertThat(jwt.getAudience()).containsExactly("ouroboros");
     assertThat(jwt.getHeaders().get("alg")).hasToString("RS256");
     assertThat(jwt.getExpiresAt()).isNotNull();
   }
