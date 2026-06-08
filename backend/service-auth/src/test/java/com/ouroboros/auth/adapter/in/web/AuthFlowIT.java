@@ -88,6 +88,26 @@ class AuthFlowIT {
   }
 
   @Test
+  void logoutRevogaRefreshToken() throws Exception {
+    register("logout@ouroboros.dev", "password1");
+    String loginBody = login("logout@ouroboros.dev", "password1");
+    String refresh = objectMapper.readTree(loginBody).get("refreshToken").asText();
+
+    mvc.perform(
+            post("/auth/logout")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"" + refresh + "\"}"))
+        .andExpect(status().isNoContent());
+
+    // o refresh token revogado nao pode mais renovar
+    mvc.perform(
+            post("/auth/refresh")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"refreshToken\":\"" + refresh + "\"}"))
+        .andExpect(status().isUnauthorized());
+  }
+
+  @Test
   void loginComSenhaErradaRetorna401() throws Exception {
     register("wrong@ouroboros.dev", "password1");
 

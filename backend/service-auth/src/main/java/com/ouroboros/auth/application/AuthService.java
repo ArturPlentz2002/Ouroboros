@@ -120,6 +120,12 @@ public class AuthService {
     return new TokenPair(accessToken, rotation.newRawToken(), tokenService.accessTokenTtlSeconds());
   }
 
+  /** Revoga o refresh token informado (logout). Idempotente. */
+  @Transactional
+  public void logout(String rawRefreshToken) {
+    refreshTokenService.revoke(rawRefreshToken);
+  }
+
   private TokenPair issueTokens(UUID userId, String email) {
     String accessToken = tokenService.issueAccessToken(userId, email);
     String refreshToken = refreshTokenService.issue(userId);
