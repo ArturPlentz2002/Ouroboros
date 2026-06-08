@@ -12,8 +12,28 @@
 
   <artifactId>shared</artifactId>
   <name>shared</name>
-  <description>Biblioteca comum: constantes, modelo de erro e utilitarios reaproveitaveis entre servicos</description>
+  <description>Biblioteca comum: constantes, modelo de erro e tratamento de erros reaproveitaveis entre servicos</description>
 
-  <!-- Biblioteca (jar), nao e uma aplicacao bootable: sem spring-boot-maven-plugin. -->
+  <!-- Biblioteca (jar), nao e uma aplicacao bootable: sem spring-boot-maven-plugin.
+       spring-web e servlet-api ficam como 'provided' pois os servicos ja os trazem
+       via spring-boot-starter-web em runtime. -->
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <!-- org.springframework.validation.BindException (super de MethodArgumentNotValidException) -->
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
 
 </project>
