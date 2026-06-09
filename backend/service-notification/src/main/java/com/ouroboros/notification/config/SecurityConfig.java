@@ -15,8 +15,7 @@ public class SecurityConfig {
     http.csrf(csrf -> csrf.disable())
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
-            auth ->
-                auth.requestMatchers("/actuator/health").permitAll().anyRequest().authenticated())
+            auth -> auth.requestMatchers("/actuator/**").permitAll().anyRequest().authenticated())
         .oauth2ResourceServer(oauth2 -> oauth2.jwt(jwt -> {}));
     return http.build();
   }

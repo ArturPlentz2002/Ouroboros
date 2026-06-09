@@ -17,7 +17,7 @@ public class SecurityConfig {
         .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
         .authorizeHttpRequests(
             auth ->
-                auth.requestMatchers("/auth/**", "/oauth2/jwks", "/actuator/health")
+                auth.requestMatchers("/auth/**", "/oauth2/jwks", "/actuator/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated());
