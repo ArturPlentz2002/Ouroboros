@@ -25,6 +25,7 @@
     <module>service-user</module>
     <module>service-finance</module>
     <module>service-notification</module>
+    <module>service-notes</module>
     <module>gateway</module>
   </modules>
 

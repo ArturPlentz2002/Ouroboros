@@ -154,6 +154,19 @@ services:
       rabbitmq:
         condition: service_healthy
 
+  service-notes:
+    build:
+      context: ../backend
+      dockerfile: service-notes/Dockerfile
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://ouroboros:ouroboros@mongo:27017/notes?authSource=admin
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    depends_on:
+      mongo:
+        condition: service_healthy
+      service-auth:
+        condition: service_started
+
   gateway:
     build:
       context: ../backend
@@ -164,6 +177,7 @@ services:
       SERVICE_USER_URI: http://service-user:8083
       SERVICE_FINANCE_URI: http://service-finance:8084
       SERVICE_NOTIFICATION_URI: http://service-notification:8085
+      SERVICE_NOTES_URI: http://service-notes:8086
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     ports:
       # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
@@ -178,6 +192,8 @@ services:
       service-finance:
         condition: service_started
       service-notification:
+        condition: service_started
+      service-notes:
         condition: service_started
 
 volumes:
