@@ -50,6 +50,28 @@ class CategoryServiceTest {
   }
 
   @Test
+  void rejeitaNomeDuplicadoIgnorandoEspacosNasPontas() {
+    Category existing = Category.create(userId, "Mercado", null);
+    // O mock e indexado pelo nome ja normalizado: so casa se o service aplicar trim antes.
+    when(categories.findByUserIdAndNameIgnoreCase(userId, "Mercado"))
+        .thenReturn(Optional.of(existing));
+
+    assertThatThrownBy(() -> service.create(userId, "  Mercado  ", null))
+        .isInstanceOf(DuplicateCategoryException.class);
+    verify(categories, never()).save(any(Category.class));
+  }
+
+  @Test
+  void persisteNomeSemEspacosNasPontas() {
+    when(categories.findByUserIdAndNameIgnoreCase(userId, "Lazer")).thenReturn(Optional.empty());
+    when(categories.save(any(Category.class))).thenAnswer(inv -> inv.getArgument(0));
+
+    Category created = service.create(userId, "  Lazer  ", null);
+
+    assertThat(created.getName()).isEqualTo("Lazer");
+  }
+
+  @Test
   void getInexistenteLancaNotFound() {
     UUID id = UUID.randomUUID();
     when(categories.findByIdAndUserId(id, userId)).thenReturn(Optional.empty());

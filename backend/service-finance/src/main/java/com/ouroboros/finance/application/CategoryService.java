@@ -19,8 +19,9 @@ public class CategoryService {
 
   @Transactional
   public Category create(UUID userId, String name, String color) {
-    requireUniqueName(userId, name, null);
-    return categories.save(Category.create(userId, name, color));
+    String normalized = normalize(name);
+    requireUniqueName(userId, normalized, null);
+    return categories.save(Category.create(userId, normalized, color));
   }
 
   @Transactional(readOnly = true)
@@ -41,8 +42,9 @@ public class CategoryService {
         categories
             .findByIdAndUserId(id, userId)
             .orElseThrow(() -> new CategoryNotFoundException(id));
-    requireUniqueName(userId, name, id);
-    category.update(name, color);
+    String normalized = normalize(name);
+    requireUniqueName(userId, normalized, id);
+    category.update(normalized, color);
     return categories.save(category);
   }
 
@@ -53,6 +55,15 @@ public class CategoryService {
             .findByIdAndUserId(id, userId)
             .orElseThrow(() -> new CategoryNotFoundException(id));
     categories.delete(category);
+  }
+
+  /**
+   * Remove espacos nas pontas para que nomes como " Mercado" e "Mercado " nao escapem da regra de
+   * unicidade nem sujem os dados (espelha {@code AuthService.normalizeEmail}). O {@code @NotBlank}
+   * do request garante que o resultado nao fica vazio.
+   */
+  private static String normalize(String name) {
+    return name == null ? null : name.trim();
   }
 
   /** Garante que o nome nao colide com outra categoria do mesmo usuario. */

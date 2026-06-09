@@ -130,6 +130,19 @@ class CategoryIT {
   }
 
   @Test
+  void rejeitaNomeDuplicadoComEspacosCom409() throws Exception {
+    UUID userId = UUID.randomUUID();
+    createCategory(userId, "Mercado");
+
+    mvc.perform(
+            post(BASE)
+                .with(asUser(userId))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(categoryJson("  Mercado  ", "#000000")))
+        .andExpect(status().isConflict());
+  }
+
+  @Test
   void rejeitaCorInvalidaCom400() throws Exception {
     UUID userId = UUID.randomUUID();
 
