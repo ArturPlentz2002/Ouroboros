@@ -101,4 +101,22 @@ class NoteServiceTest {
     assertThatThrownBy(() -> service.delete(USER, "x")).isInstanceOf(NoteNotFoundException.class);
     verify(notes, never()).delete(any());
   }
+
+  @Test
+  void buscaSemFiltrosRecaiNaListagem() {
+    Note n = Note.create(USER, "T", "C", List.of());
+    when(notes.findByUserIdOrderByUpdatedAtDesc(USER)).thenReturn(List.of(n));
+
+    assertThat(service.search(USER, "  ", null)).containsExactly(n);
+    verify(notes, never()).search(any(), any(), any());
+  }
+
+  @Test
+  void buscaComFiltroDelegaAoFragmento() {
+    Note n = Note.create(USER, "T", "C", List.of("work"));
+    when(notes.search(USER, "work", null)).thenReturn(List.of(n));
+
+    assertThat(service.search(USER, "work", null)).containsExactly(n);
+    verify(notes, never()).findByUserIdOrderByUpdatedAtDesc(any());
+  }
 }

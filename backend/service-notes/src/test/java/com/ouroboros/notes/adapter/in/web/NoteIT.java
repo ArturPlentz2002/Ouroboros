@@ -64,6 +64,15 @@ class NoteIT {
     return objectMapper.readTree(body).get("id").asText();
   }
 
+  private void createNote(String userId, String title, String content, String tagsJson)
+      throws Exception {
+    String json =
+        "{\"title\":\"" + title + "\",\"content\":\"" + content + "\",\"tags\":" + tagsJson + "}";
+    mvc.perform(
+            post(BASE).with(asUser(userId)).contentType(MediaType.APPLICATION_JSON).content(json))
+        .andExpect(status().isCreated());
+  }
+
   @Test
   void semTokenRetorna401() throws Exception {
     mvc.perform(get(BASE)).andExpect(status().isUnauthorized());
@@ -123,5 +132,40 @@ class NoteIT {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"title\":\"\",\"content\":\"x\"}"))
         .andExpect(status().isBadRequest());
+  }
+
+  @Test
+  void buscaPorTagFiltra() throws Exception {
+    String userId = UUID.randomUUID().toString();
+    createNote(userId, "Trabalho", "reuniao", "[\"work\"]");
+    createNote(userId, "Pessoal", "academia", "[\"home\"]");
+
+    mvc.perform(get(BASE).param("tag", "work").with(asUser(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].title").value("Trabalho"));
+  }
+
+  @Test
+  void buscaPorTextoEmTituloOuConteudoCaseInsensitive() throws Exception {
+    String userId = UUID.randomUUID().toString();
+    createNote(userId, "Compras", "Comprar LEITE e pao", "[]");
+    createNote(userId, "Treino", "corrida no parque", "[]");
+
+    mvc.perform(get(BASE).param("q", "leite").with(asUser(userId)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(1))
+        .andExpect(jsonPath("$[0].title").value("Compras"));
+  }
+
+  @Test
+  void buscaEscopadaPorUsuario() throws Exception {
+    String owner = UUID.randomUUID().toString();
+    String other = UUID.randomUUID().toString();
+    createNote(owner, "Privada", "segredo", "[\"x\"]");
+
+    mvc.perform(get(BASE).param("tag", "x").with(asUser(other)))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$.length()").value(0));
   }
 }
