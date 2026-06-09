@@ -62,5 +62,24 @@ services:
       timeout: 5s
       retries: 15
 
+  mongo:
+    image: mongo:7
+    container_name: ouroboros-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ouroboros
+      MONGO_INITDB_ROOT_PASSWORD: ouroboros
+    ports:
+      # Porta do host parametrizavel para conviver com um Mongo local na 27017.
+      - "${MONGO_HOST_PORT:-27017}:27017"
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      # ping nao exige autenticacao mesmo com auth habilitado; confirma o servidor de pe.
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
 volumes:
   pgdata:
+  mongodata:

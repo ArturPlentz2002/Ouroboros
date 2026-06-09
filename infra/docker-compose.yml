@@ -53,6 +53,20 @@ services:
       timeout: 5s
       retries: 15
 
+  mongo:
+    image: mongo:7
+    container_name: ouroboros-mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ouroboros
+      MONGO_INITDB_ROOT_PASSWORD: ouroboros
+    volumes:
+      - mongodata:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --quiet --eval 'db.adminCommand(\"ping\").ok' | grep -q 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
   service-auth:
     build:
       context: ../backend
@@ -168,3 +182,4 @@ services:
 
 volumes:
   pgdata:
+  mongodata:
