@@ -25,6 +25,9 @@ jobs:
       - name: Instalar semantic-release
         run: npm install -g semantic-release @semantic-release/changelog @semantic-release/git @semantic-release/exec
       - name: Rodar release
+        # Usa o GITHUB_TOKEN do Actions (permissoes declaradas no bloco `permissions` acima):
+        # consegue dar push do commit de release em main (protecao permite push direto) E
+        # criar o GitHub Release. O fine-grained PAT (GH_TOKEN) dava 403 em "create a release".
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
