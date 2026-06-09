@@ -1,10 +1,12 @@
 package com.ouroboros.agenda.adapter.in.web;
 
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -72,6 +74,13 @@ class AgendaEventIT {
   @Test
   void semTokenRetorna401() throws Exception {
     mvc.perform(get(BASE)).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void metricasPrometheusExpostasSemAuth() throws Exception {
+    mvc.perform(get("/actuator/prometheus"))
+        .andExpect(status().isOk())
+        .andExpect(content().string(containsString("jvm_")));
   }
 
   @Test

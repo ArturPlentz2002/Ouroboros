@@ -21,7 +21,7 @@ public class SecurityConfig {
                 exchange
                     .pathMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .pathMatchers("/auth/**", "/oauth2/jwks", "/actuator/health")
+                    .pathMatchers("/auth/**", "/oauth2/jwks", "/actuator/**")
                     .permitAll()
                     .anyExchange()
                     .authenticated())
