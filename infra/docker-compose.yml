@@ -276,7 +276,30 @@ services:
       service-analytics:
         condition: service_started
 
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    container_name: ouroboros-prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    container_name: ouroboros-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_USER:-ouroboros}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-ouroboros}
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafanadata:/var/lib/grafana
+    ports:
+      - "${GRAFANA_HOST_PORT:-3000}:3000"
+    depends_on:
+      - prometheus
+
 volumes:
   pgdata:
   mongodata:
   cassandradata:
+  grafanadata:

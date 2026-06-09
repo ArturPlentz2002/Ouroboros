@@ -1,0 +1,18 @@
+# Scrape das metricas do Actuator (/actuator/prometheus) de cada servico.
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: ouroboros-services
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets:
+          - gateway:8080
+          - service-auth:8081
+          - service-agenda:8082
+          - service-user:8083
+          - service-finance:8084
+          - service-notification:8085
+          - service-notes:8086
+          - service-files:8087
+          - service-analytics:8088
