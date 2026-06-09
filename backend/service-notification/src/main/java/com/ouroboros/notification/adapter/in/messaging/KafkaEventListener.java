@@ -30,33 +30,39 @@ public class KafkaEventListener {
   @KafkaListener(topics = Topics.USER_REGISTERED)
   public void onUserRegistered(String payload) throws JsonProcessingException {
     UserRegisteredEvent event = mapper.readValue(payload, UserRegisteredEvent.class);
-    service.record(
-        UUID.fromString(event.eventId()),
-        event.userId(),
-        "USER_REGISTERED",
-        "Bem-vindo ao Ouroboros!",
-        "Sua conta " + event.email() + " foi criada.");
+    service
+        .record(
+            UUID.fromString(event.eventId()),
+            event.userId(),
+            "USER_REGISTERED",
+            "Bem-vindo ao Ouroboros!",
+            "Sua conta " + event.email() + " foi criada.")
+        .ifPresent(service::enqueueEmail);
   }
 
   @KafkaListener(topics = Topics.AGENDA_EVENT_CREATED)
   public void onAgendaEventCreated(String payload) throws JsonProcessingException {
     AgendaEventCreatedEvent event = mapper.readValue(payload, AgendaEventCreatedEvent.class);
-    service.record(
-        UUID.fromString(event.eventId()),
-        event.userId(),
-        "AGENDA_EVENT_CREATED",
-        "Novo evento na agenda",
-        event.title());
+    service
+        .record(
+            UUID.fromString(event.eventId()),
+            event.userId(),
+            "AGENDA_EVENT_CREATED",
+            "Novo evento na agenda",
+            event.title())
+        .ifPresent(service::enqueueEmail);
   }
 
   @KafkaListener(topics = Topics.FINANCE_ENTRY_CREATED)
   public void onFinanceEntryCreated(String payload) throws JsonProcessingException {
     FinanceEntryEvent event = mapper.readValue(payload, FinanceEntryEvent.class);
-    service.record(
-        UUID.fromString(event.eventId()),
-        event.userId(),
-        "FINANCE_ENTRY_CREATED",
-        "Lancamento registrado",
-        event.type() + " de " + event.amount());
+    service
+        .record(
+            UUID.fromString(event.eventId()),
+            event.userId(),
+            "FINANCE_ENTRY_CREATED",
+            "Lancamento registrado",
+            event.type() + " de " + event.amount())
+        .ifPresent(service::enqueueEmail);
   }
 }
