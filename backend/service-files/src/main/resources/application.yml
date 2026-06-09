@@ -1,0 +1,44 @@
+server:
+  port: ${SERVER_PORT:8087}
+
+spring:
+  application:
+    name: service-files
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/files}
+    username: ${SPRING_DATASOURCE_USERNAME:ouroboros}
+    password: ${SPRING_DATASOURCE_PASSWORD:ouroboros}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  servlet:
+    multipart:
+      # Limites de upload (ajuste conforme necessidade do produto).
+      max-file-size: 25MB
+      max-request-size: 25MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
+
+ouroboros:
+  s3:
+    # Endpoint vazio = AWS real (cadeia de credenciais padrao). Definido (LocalStack/dev)
+    # ativa path-style e usa as credenciais estaticas abaixo.
+    endpoint: ${OUROBOROS_S3_ENDPOINT:http://localhost:4566}
+    region: ${OUROBOROS_S3_REGION:us-east-1}
+    bucket: ${OUROBOROS_S3_BUCKET:ouroboros-files}
+    access-key: ${OUROBOROS_S3_ACCESS_KEY:test}
+    secret-key: ${OUROBOROS_S3_SECRET_KEY:test}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
