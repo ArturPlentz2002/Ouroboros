@@ -119,6 +119,27 @@ services:
       kafka:
         condition: service_healthy
 
+  service-notification:
+    build:
+      context: ../backend
+      dockerfile: service-notification/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notifications
+      SPRING_DATASOURCE_USERNAME: ouroboros
+      SPRING_DATASOURCE_PASSWORD: ouroboros
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_RABBITMQ_HOST: rabbitmq
+    depends_on:
+      postgres:
+        condition: service_healthy
+      service-auth:
+        condition: service_started
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+
   gateway:
     build:
       context: ../backend
@@ -128,6 +149,7 @@ services:
       SERVICE_AGENDA_URI: http://service-agenda:8082
       SERVICE_USER_URI: http://service-user:8083
       SERVICE_FINANCE_URI: http://service-finance:8084
+      SERVICE_NOTIFICATION_URI: http://service-notification:8085
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     ports:
       # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
@@ -140,6 +162,8 @@ services:
       service-user:
         condition: service_started
       service-finance:
+        condition: service_started
+      service-notification:
         condition: service_started
 
 volumes:

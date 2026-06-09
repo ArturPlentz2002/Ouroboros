@@ -23,6 +23,10 @@ spring:
           uri: ${SERVICE_FINANCE_URI:http://localhost:8084}
           predicates:
             - Path=/api/v1/finance/**
+        - id: service-notification
+          uri: ${SERVICE_NOTIFICATION_URI:http://localhost:8085}
+          predicates:
+            - Path=/api/v1/notifications/**
       globalcors:
         cors-configurations:
           '[/**]':
