@@ -24,6 +24,7 @@
     <module>service-agenda</module>
     <module>service-user</module>
     <module>service-finance</module>
+    <module>service-notification</module>
     <module>gateway</module>
   </modules>
 
