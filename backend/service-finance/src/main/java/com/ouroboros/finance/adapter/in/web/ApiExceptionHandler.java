@@ -2,6 +2,7 @@ package com.ouroboros.finance.adapter.in.web;
 
 import com.ouroboros.finance.application.CategoryNotFoundException;
 import com.ouroboros.finance.application.DuplicateCategoryException;
+import com.ouroboros.finance.application.EntryNotFoundException;
 import com.ouroboros.shared.ApiError;
 import com.ouroboros.shared.web.AbstractApiExceptionHandler;
 import jakarta.servlet.http.HttpServletRequest;
@@ -18,6 +19,12 @@ public class ApiExceptionHandler extends AbstractApiExceptionHandler {
   @ExceptionHandler(CategoryNotFoundException.class)
   public ResponseEntity<ApiError> handleNotFound(
       CategoryNotFoundException ex, HttpServletRequest request) {
+    return build(HttpStatus.NOT_FOUND, ex.getMessage(), request, List.of());
+  }
+
+  @ExceptionHandler(EntryNotFoundException.class)
+  public ResponseEntity<ApiError> handleEntryNotFound(
+      EntryNotFoundException ex, HttpServletRequest request) {
     return build(HttpStatus.NOT_FOUND, ex.getMessage(), request, List.of());
   }
 
