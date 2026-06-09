@@ -104,11 +104,14 @@ services:
       SPRING_DATASOURCE_USERNAME: ouroboros
       SPRING_DATASOURCE_PASSWORD: ouroboros
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
       service-auth:
         condition: service_started
+      kafka:
+        condition: service_healthy
 
   gateway:
     build:
