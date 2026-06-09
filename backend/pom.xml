@@ -102,6 +102,29 @@
               <goal>report</goal>
             </goals>
           </execution>
+          <execution>
+            <!-- Gate de cobertura: o PR falha se um modulo cair abaixo do minimo de linhas.
+                 Piso inicial conservador (0.25); modulos sem testes proprios (shared) pulam. -->
+            <id>jacoco-check</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <rule>
+                  <element>BUNDLE</element>
+                  <limits>
+                    <limit>
+                      <counter>LINE</counter>
+                      <value>COVEREDRATIO</value>
+                      <minimum>0.25</minimum>
+                    </limit>
+                  </limits>
+                </rule>
+              </rules>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <!-- Roda os testes de integracao (*IT) na fase verify (Surefire so roda *Test). -->
