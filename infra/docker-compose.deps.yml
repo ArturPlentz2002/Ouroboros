@@ -80,6 +80,23 @@ services:
       timeout: 5s
       retries: 15
 
+  localstack:
+    image: localstack/localstack:3
+    container_name: ouroboros-localstack
+    environment:
+      SERVICES: s3
+    ports:
+      # Porta do host parametrizavel (gateway de borda do LocalStack, default 4566).
+      - "${LOCALSTACK_HOST_PORT:-4566}:4566"
+    volumes:
+      # Script de bootstrap roda quando o S3 fica pronto (cria o bucket).
+      - ./localstack/init-s3.sh:/etc/localstack/init/ready.d/init-s3.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3 ls s3://ouroboros-files >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 15
+
 volumes:
   pgdata:
   mongodata:
