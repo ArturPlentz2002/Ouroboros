@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8088}
+
+spring:
+  application:
+    name: service-analytics
+  cassandra:
+    contact-points: ${SPRING_CASSANDRA_CONTACT_POINTS:localhost}
+    port: ${SPRING_CASSANDRA_PORT:9042}
+    local-datacenter: ${SPRING_CASSANDRA_LOCAL_DATACENTER:datacenter1}
+    keyspace-name: ${SPRING_CASSANDRA_KEYSPACE:ouroboros}
+    # O schema e criado fora da app (init.cql / Testcontainers); a app so o usa.
+    schema-action: none
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

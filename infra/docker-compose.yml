@@ -222,6 +222,22 @@ services:
       service-auth:
         condition: service_started
 
+  service-analytics:
+    build:
+      context: ../backend
+      dockerfile: service-analytics/Dockerfile
+    environment:
+      SPRING_CASSANDRA_CONTACT_POINTS: cassandra
+      SPRING_CASSANDRA_PORT: "9042"
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    depends_on:
+      cassandra:
+        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
+      service-auth:
+        condition: service_started
+
   gateway:
     build:
       context: ../backend
@@ -234,6 +250,7 @@ services:
       SERVICE_NOTIFICATION_URI: http://service-notification:8085
       SERVICE_NOTES_URI: http://service-notes:8086
       SERVICE_FILES_URI: http://service-files:8087
+      SERVICE_ANALYTICS_URI: http://service-analytics:8088
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     ports:
       # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
@@ -252,6 +269,8 @@ services:
       service-notes:
         condition: service_started
       service-files:
+        condition: service_started
+      service-analytics:
         condition: service_started
 
 volumes:
