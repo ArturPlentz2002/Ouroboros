@@ -27,6 +27,7 @@
     <module>service-notification</module>
     <module>service-notes</module>
     <module>service-files</module>
+    <module>service-analytics</module>
     <module>gateway</module>
   </modules>
 
