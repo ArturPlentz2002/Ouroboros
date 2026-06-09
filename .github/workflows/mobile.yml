@@ -1,0 +1,28 @@
+name: Mobile CI
+
+# Lint de tipos + testes da camada de logica do app (mobile/), em Node.
+on:
+  pull_request:
+    paths: ['mobile/**']
+  push:
+    branches: [develop, main]
+    paths: ['mobile/**']
+
+defaults:
+  run:
+    working-directory: mobile
+
+jobs:
+  test:
+    name: Typecheck + Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: mobile/package-lock.json
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test -- --ci
