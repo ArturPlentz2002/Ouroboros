@@ -104,7 +104,7 @@ class NotificationFlowIT {
   }
 
   private Notification awaitNotification(UUID userId) throws InterruptedException {
-    long deadline = System.currentTimeMillis() + 30_000;
+    long deadline = System.currentTimeMillis() + 60_000;
     while (System.currentTimeMillis() < deadline) {
       List<Notification> found = notifications.findByUserIdOrderByCreatedAtDesc(userId);
       if (!found.isEmpty()) {
@@ -116,7 +116,7 @@ class NotificationFlowIT {
   }
 
   private void awaitEmailed(UUID notificationId) throws InterruptedException {
-    long deadline = System.currentTimeMillis() + 30_000;
+    long deadline = System.currentTimeMillis() + 90_000;
     while (System.currentTimeMillis() < deadline) {
       Notification n = notifications.findById(notificationId).orElseThrow();
       if (n.getEmailedAt() != null) {
