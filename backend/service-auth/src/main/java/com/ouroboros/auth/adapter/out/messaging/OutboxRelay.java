@@ -48,8 +48,14 @@ public class OutboxRelay {
         Thread.currentThread().interrupt();
         return;
       } catch (Exception e) {
-        // Deixa sentAt nulo: sera reenviado no proximo ciclo.
-        log.warn("Falha ao publicar evento de outbox {} ({})", event.getId(), event.getTopic(), e);
+        // Broker provavelmente indisponivel: para o lote para nao bloquear a thread do
+        // scheduler (seria ate 10s por evento). Os pendentes seguem no proximo ciclo.
+        log.warn(
+            "Falha ao publicar evento de outbox {} ({}); abortando o lote",
+            event.getId(),
+            event.getTopic(),
+            e);
+        return;
       }
     }
   }

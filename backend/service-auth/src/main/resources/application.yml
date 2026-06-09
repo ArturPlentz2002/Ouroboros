@@ -19,6 +19,11 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Durabilidade do outbox: so confirma apos replicacao no ISR (acks=all) e
+      # idempotencia no broker para reenvios do relay nao gerarem duplicatas.
+      acks: all
+      properties:
+        enable.idempotence: true
 
 ouroboros:
   jwt:
