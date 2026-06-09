@@ -73,12 +73,17 @@
   </dependencyManagement>
 
   <!-- Dependencias comuns a todos os modulos. O registry do Micrometer ativa o endpoint
-       /actuator/prometheus nos servicos que tem o actuator (no-op na lib shared). -->
+       /actuator/prometheus; o bridge-brave habilita tracing + correlacao (traceId/spanId nos
+       logs via MDC). No-op na lib shared, que nao tem actuator. -->
   <dependencies>
     <dependency>
       <groupId>io.micrometer</groupId>
       <artifactId>micrometer-registry-prometheus</artifactId>
       <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>io.micrometer</groupId>
+      <artifactId>micrometer-tracing-bridge-brave</artifactId>
     </dependency>
   </dependencies>
 
