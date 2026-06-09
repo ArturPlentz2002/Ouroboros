@@ -23,6 +23,7 @@
     <module>service-auth</module>
     <module>service-agenda</module>
     <module>service-user</module>
+    <module>service-finance</module>
     <module>gateway</module>
   </modules>
 
