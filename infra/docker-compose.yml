@@ -80,6 +80,30 @@ services:
       timeout: 5s
       retries: 15
 
+  cassandra:
+    image: cassandra:5
+    container_name: ouroboros-cassandra
+    environment:
+      CASSANDRA_CLUSTER_NAME: ouroboros
+    volumes:
+      - cassandradata:/var/lib/cassandra
+    healthcheck:
+      test: ["CMD-SHELL", "cqlsh -e 'describe keyspaces' >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+
+  cassandra-init:
+    image: cassandra:5
+    container_name: ouroboros-cassandra-init
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./cassandra/init.cql:/init.cql:ro
+    entrypoint: ["sh", "-c", "cqlsh cassandra -f /init.cql"]
+    restart: "no"
+
   service-auth:
     build:
       context: ../backend
@@ -233,3 +257,4 @@ services:
 volumes:
   pgdata:
   mongodata:
+  cassandradata:
