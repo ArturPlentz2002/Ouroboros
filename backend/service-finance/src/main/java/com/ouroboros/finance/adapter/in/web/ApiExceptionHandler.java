@@ -8,6 +8,7 @@ import com.ouroboros.shared.web.AbstractApiExceptionHandler;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.format.DateTimeParseException;
 import java.util.List;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -43,5 +44,15 @@ public class ApiExceptionHandler extends AbstractApiExceptionHandler {
         "Parametro de data invalido (use o formato YYYY-MM)",
         request,
         List.of());
+  }
+
+  /**
+   * Rede de seguranca para corridas: se duas requisicoes concorrentes passarem pela checagem de
+   * unicidade e a segunda violar o indice unico do banco, devolve 409 em vez de 500.
+   */
+  @ExceptionHandler(DataIntegrityViolationException.class)
+  public ResponseEntity<ApiError> handleDataIntegrity(
+      DataIntegrityViolationException ex, HttpServletRequest request) {
+    return build(HttpStatus.CONFLICT, "Conflito de dados (registro duplicado)", request, List.of());
   }
 }
