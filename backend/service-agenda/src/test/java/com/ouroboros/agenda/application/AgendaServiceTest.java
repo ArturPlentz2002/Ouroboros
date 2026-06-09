@@ -3,13 +3,17 @@ package com.ouroboros.agenda.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.ouroboros.agenda.adapter.out.messaging.OutboxWriter;
 import com.ouroboros.agenda.adapter.out.persistence.AgendaEventRepository;
 import com.ouroboros.agenda.domain.AgendaEvent;
 import com.ouroboros.agenda.domain.InvalidEventTimeException;
+import com.ouroboros.shared.events.AgendaEventCreatedEvent;
+import com.ouroboros.shared.events.Topics;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Optional;
@@ -26,11 +30,12 @@ class AgendaServiceTest {
   private static final Instant END = START.plus(Duration.ofHours(1));
 
   @Mock private AgendaEventRepository events;
+  @Mock private OutboxWriter outbox;
   private AgendaService service;
 
   @org.junit.jupiter.api.BeforeEach
   void setUp() {
-    service = new AgendaService(events);
+    service = new AgendaService(events, outbox);
   }
 
   @Test
@@ -43,6 +48,13 @@ class AgendaServiceTest {
     assertThat(event.getUserId()).isEqualTo(userId);
     assertThat(event.getTitle()).isEqualTo("Reuniao");
     verify(events).save(any(AgendaEvent.class));
+    verify(outbox)
+        .write(
+            any(),
+            eq(Topics.AGENDA_EVENT_CREATED),
+            eq("AgendaEvent"),
+            eq(event.getId()),
+            any(AgendaEventCreatedEvent.class));
   }
 
   @Test
