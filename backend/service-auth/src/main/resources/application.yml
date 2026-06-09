@@ -1,0 +1,34 @@
+server:
+  port: ${SERVER_PORT:8081}
+
+spring:
+  application:
+    name: service-auth
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/auth}
+    username: ${SPRING_DATASOURCE_USERNAME:ouroboros}
+    password: ${SPRING_DATASOURCE_PASSWORD:ouroboros}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+
+ouroboros:
+  jwt:
+    issuer: ouroboros-auth
+    audience: ouroboros
+    access-token-ttl: PT15M
+    refresh-token-ttl: P30D
+  social:
+    google:
+      # Client ID OAuth do Google (audience esperado no ID token). Vazio = nao valida aud.
+      client-id: ${GOOGLE_CLIENT_ID:}
+      jwks-uri: https://www.googleapis.com/oauth2/v3/certs
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

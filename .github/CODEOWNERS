@@ -1,0 +1,13 @@
+# Code owners do Ouroboros.
+# Quando a protecao de branch exigir review de code owner, o dono e solicitado
+# automaticamente. Como o repo e solo, a protecao roda com enforce_admins desligado,
+# permitindo que o dono mergeie sem auto-aprovacao (GitHub nao permite aprovar o
+# proprio PR). Ao entrarem colaboradores, basta reativar enforce_admins.
+
+# Padrao: tudo pertence ao dono.
+*                       @ArturPlentz2002
+
+# Areas especificas (preparado para crescer)
+/backend/               @ArturPlentz2002
+/.github/               @ArturPlentz2002
+/docs/                  @ArturPlentz2002

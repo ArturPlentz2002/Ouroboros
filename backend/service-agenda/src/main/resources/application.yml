@@ -1,0 +1,31 @@
+server:
+  port: ${SERVER_PORT:8082}
+
+spring:
+  application:
+    name: service-agenda
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/agenda}
+    username: ${SPRING_DATASOURCE_USERNAME:ouroboros}
+    password: ${SPRING_DATASOURCE_PASSWORD:ouroboros}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+  flyway:
+    enabled: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Valida o JWT localmente buscando a chave publica (JWKS) do service-auth.
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          # Exige que o token seja destinado a plataforma Ouroboros.
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health

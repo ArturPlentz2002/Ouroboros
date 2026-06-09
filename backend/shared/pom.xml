@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.ouroboros</groupId>
+    <artifactId>ouroboros-backend</artifactId>
+    <version>0.0.1-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>shared</artifactId>
+  <name>shared</name>
+  <description>Biblioteca comum: constantes, modelo de erro e tratamento de erros reaproveitaveis entre servicos</description>
+
+  <!-- Biblioteca (jar), nao e uma aplicacao bootable: sem spring-boot-maven-plugin.
+       spring-web e servlet-api ficam como 'provided' pois os servicos ja os trazem
+       via spring-boot-starter-web em runtime. -->
+  <dependencies>
+    <dependency>
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-web</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <!-- org.springframework.validation.BindException (super de MethodArgumentNotValidException) -->
+      <groupId>org.springframework</groupId>
+      <artifactId>spring-context</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>
