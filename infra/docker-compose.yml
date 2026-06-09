@@ -229,12 +229,15 @@ services:
     environment:
       SPRING_CASSANDRA_CONTACT_POINTS: cassandra
       SPRING_CASSANDRA_PORT: "9042"
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     depends_on:
       cassandra:
         condition: service_healthy
       cassandra-init:
         condition: service_completed_successfully
+      kafka:
+        condition: service_healthy
       service-auth:
         condition: service_started
 
