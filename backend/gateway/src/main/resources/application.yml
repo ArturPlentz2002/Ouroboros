@@ -31,6 +31,10 @@ spring:
           uri: ${SERVICE_NOTES_URI:http://localhost:8086}
           predicates:
             - Path=/api/v1/notes/**
+        - id: service-files
+          uri: ${SERVICE_FILES_URI:http://localhost:8087}
+          predicates:
+            - Path=/api/v1/files/**
       globalcors:
         cors-configurations:
           '[/**]':

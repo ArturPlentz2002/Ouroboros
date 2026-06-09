@@ -180,6 +180,24 @@ services:
       service-auth:
         condition: service_started
 
+  service-files:
+    build:
+      context: ../backend
+      dockerfile: service-files/Dockerfile
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/files
+      SPRING_DATASOURCE_USERNAME: ouroboros
+      SPRING_DATASOURCE_PASSWORD: ouroboros
+      OUROBOROS_S3_ENDPOINT: http://localstack:4566
+      OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
+    depends_on:
+      postgres:
+        condition: service_healthy
+      localstack:
+        condition: service_healthy
+      service-auth:
+        condition: service_started
+
   gateway:
     build:
       context: ../backend
@@ -191,6 +209,7 @@ services:
       SERVICE_FINANCE_URI: http://service-finance:8084
       SERVICE_NOTIFICATION_URI: http://service-notification:8085
       SERVICE_NOTES_URI: http://service-notes:8086
+      SERVICE_FILES_URI: http://service-files:8087
       OUROBOROS_JWK_SET_URI: http://service-auth:8081/oauth2/jwks
     ports:
       # Porta do host parametrizavel (default 8080) para conviver com a 8080 ocupada.
@@ -207,6 +226,8 @@ services:
       service-notification:
         condition: service_started
       service-notes:
+        condition: service_started
+      service-files:
         condition: service_started
 
 volumes:
