@@ -30,4 +30,19 @@ public class FileService {
   public List<FileMetadata> list(UUID userId) {
     return metadata.findByUserIdOrderByCreatedAtDesc(userId);
   }
+
+  /** Baixa o conteudo do arquivo do usuario. */
+  public FileDownload download(UUID userId, UUID id) {
+    FileMetadata meta =
+        metadata.findByIdAndUserId(id, userId).orElseThrow(() -> new FileNotFoundException(id));
+    return new FileDownload(meta, storage.get(meta.getStorageKey()));
+  }
+
+  /** Remove o blob do storage e os metadados. */
+  public void delete(UUID userId, UUID id) {
+    FileMetadata meta =
+        metadata.findByIdAndUserId(id, userId).orElseThrow(() -> new FileNotFoundException(id));
+    storage.delete(meta.getStorageKey());
+    metadata.delete(meta);
+  }
 }

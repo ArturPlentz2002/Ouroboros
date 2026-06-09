@@ -1,11 +1,14 @@
 package com.ouroboros.files.adapter.in.web;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeAll;
@@ -59,6 +62,7 @@ class FileIT {
   }
 
   @Autowired private MockMvc mvc;
+  @Autowired private ObjectMapper objectMapper;
 
   private static RequestPostProcessor asUser(UUID userId) {
     return jwt().jwt(builder -> builder.subject(userId.toString()));
@@ -67,6 +71,16 @@ class FileIT {
   private static MockMultipartFile file(String name) {
     return new MockMultipartFile(
         "file", name, "text/plain", "conteudo do arquivo".getBytes(StandardCharsets.UTF_8));
+  }
+
+  private String upload(UUID userId, String name) throws Exception {
+    String body =
+        mvc.perform(multipart(BASE).file(file(name)).with(asUser(userId)))
+            .andExpect(status().isCreated())
+            .andReturn()
+            .getResponse()
+            .getContentAsString();
+    return objectMapper.readTree(body).get("id").asText();
   }
 
   @Test
@@ -94,5 +108,35 @@ class FileIT {
     mvc.perform(get(BASE).with(asUser(userB)))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.length()").value(0));
+  }
+
+  @Test
+  void baixaConteudoDoArquivo() throws Exception {
+    UUID userId = UUID.randomUUID();
+    String id = upload(userId, "doc.txt");
+
+    mvc.perform(get(BASE + "/" + id).with(asUser(userId)))
+        .andExpect(status().isOk())
+        .andExpect(content().string("conteudo do arquivo"));
+  }
+
+  @Test
+  void deletaRemoveArquivoEDepoisRetorna404() throws Exception {
+    UUID userId = UUID.randomUUID();
+    String id = upload(userId, "tmp.txt");
+
+    mvc.perform(delete(BASE + "/" + id).with(asUser(userId))).andExpect(status().isNoContent());
+    mvc.perform(get(BASE + "/" + id).with(asUser(userId))).andExpect(status().isNotFound());
+  }
+
+  @Test
+  void arquivoDeOutroUsuarioRetorna404() throws Exception {
+    UUID owner = UUID.randomUUID();
+    UUID other = UUID.randomUUID();
+    String id = upload(owner, "privado.txt");
+
+    mvc.perform(get(BASE + "/" + id).with(asUser(other))).andExpect(status().isNotFound());
+    mvc.perform(delete(BASE + "/" + id).with(asUser(other))).andExpect(status().isNotFound());
+    mvc.perform(get(BASE + "/" + id).with(asUser(owner))).andExpect(status().isOk());
   }
 }
