@@ -3,16 +3,20 @@ package com.ouroboros.finance.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
+import com.ouroboros.finance.adapter.out.messaging.OutboxWriter;
 import com.ouroboros.finance.adapter.out.persistence.CategoryRepository;
 import com.ouroboros.finance.adapter.out.persistence.FinanceEntryRepository;
 import com.ouroboros.finance.domain.Category;
 import com.ouroboros.finance.domain.EntryType;
 import com.ouroboros.finance.domain.FinanceEntry;
+import com.ouroboros.shared.events.FinanceEntryEvent;
+import com.ouroboros.shared.events.Topics;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Optional;
@@ -28,6 +32,7 @@ class FinanceEntryServiceTest {
 
   @Mock private FinanceEntryRepository entries;
   @Mock private CategoryRepository categories;
+  @Mock private OutboxWriter outbox;
   @InjectMocks private FinanceEntryService service;
 
   private final UUID userId = UUID.randomUUID();
@@ -46,6 +51,13 @@ class FinanceEntryServiceTest {
     assertThat(created.getAmount()).isEqualByComparingTo("12.50");
     verifyNoInteractions(categories);
     verify(entries).save(any(FinanceEntry.class));
+    verify(outbox)
+        .write(
+            any(),
+            eq(Topics.FINANCE_ENTRY_CREATED),
+            eq("FinanceEntry"),
+            eq(created.getId()),
+            any(FinanceEntryEvent.class));
   }
 
   @Test
@@ -104,5 +116,25 @@ class FinanceEntryServiceTest {
 
     assertThatThrownBy(() -> service.delete(userId, id)).isInstanceOf(EntryNotFoundException.class);
     verify(entries, never()).delete(any(FinanceEntry.class));
+  }
+
+  @Test
+  void deletaPublicaEventoDeRemocao() {
+    FinanceEntry entry =
+        FinanceEntry.create(
+            userId, null, EntryType.EXPENSE, new BigDecimal("5"), null, today, null);
+    UUID id = entry.getId();
+    when(entries.findByIdAndUserId(id, userId)).thenReturn(Optional.of(entry));
+
+    service.delete(userId, id);
+
+    verify(entries).delete(entry);
+    verify(outbox)
+        .write(
+            any(),
+            eq(Topics.FINANCE_ENTRY_DELETED),
+            eq("FinanceEntry"),
+            eq(id),
+            any(FinanceEntryEvent.class));
   }
 }
