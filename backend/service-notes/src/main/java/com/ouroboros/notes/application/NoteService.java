@@ -4,6 +4,7 @@ import com.ouroboros.notes.adapter.out.persistence.NoteRepository;
 import com.ouroboros.notes.domain.Note;
 import java.util.List;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 /** Casos de uso de notas. Todas as operacoes sao escopadas pelo usuario dono. */
 @Service
@@ -21,6 +22,17 @@ public class NoteService {
 
   public List<Note> list(String userId) {
     return notes.findByUserIdOrderByUpdatedAtDesc(userId);
+  }
+
+  /**
+   * Lista as notas do usuario, opcionalmente filtrando por {@code tag} e/ou {@code text}. Sem
+   * filtros, recai na listagem completa.
+   */
+  public List<Note> search(String userId, String tag, String text) {
+    if (!StringUtils.hasText(tag) && !StringUtils.hasText(text)) {
+      return list(userId);
+    }
+    return notes.search(userId, tag, text);
   }
 
   public Note get(String userId, String id) {
