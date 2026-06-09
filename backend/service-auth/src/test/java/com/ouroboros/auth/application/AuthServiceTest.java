@@ -8,12 +8,15 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.ouroboros.auth.adapter.out.messaging.OutboxWriter;
 import com.ouroboros.auth.adapter.out.persistence.UserRepository;
 import com.ouroboros.auth.application.social.SocialIdTokenVerifier;
 import com.ouroboros.auth.application.social.SocialIdentity;
 import com.ouroboros.auth.application.social.UnsupportedSocialProviderException;
 import com.ouroboros.auth.domain.User;
 import com.ouroboros.auth.domain.WeakPasswordException;
+import com.ouroboros.shared.events.Topics;
+import com.ouroboros.shared.events.UserRegisteredEvent;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -34,13 +37,19 @@ class AuthServiceTest {
   @Mock private TokenService tokenService;
   @Mock private RefreshTokenService refreshTokenService;
   @Mock private SocialIdTokenVerifier googleVerifier;
+  @Mock private OutboxWriter outbox;
   private AuthService authService;
 
   @BeforeEach
   void setUp() {
     authService =
         new AuthService(
-            users, passwordEncoder, tokenService, refreshTokenService, List.of(googleVerifier));
+            users,
+            passwordEncoder,
+            tokenService,
+            refreshTokenService,
+            List.of(googleVerifier),
+            outbox);
   }
 
   @Test
@@ -56,6 +65,13 @@ class AuthServiceTest {
     assertThat(saved.getValue().getEmail()).isEqualTo("ana@ouroboros.dev");
     assertThat(saved.getValue().getPasswordHash()).isEqualTo("HASH");
     assertThat(saved.getValue().getProvider()).isEqualTo(User.PROVIDER_LOCAL);
+    verify(outbox)
+        .write(
+            any(),
+            eq(Topics.USER_REGISTERED),
+            eq("User"),
+            eq(saved.getValue().getId()),
+            any(UserRegisteredEvent.class));
   }
 
   @Test

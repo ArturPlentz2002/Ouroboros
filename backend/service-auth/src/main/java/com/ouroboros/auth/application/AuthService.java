@@ -1,5 +1,6 @@
 package com.ouroboros.auth.application;
 
+import com.ouroboros.auth.adapter.out.messaging.OutboxWriter;
 import com.ouroboros.auth.adapter.out.persistence.UserRepository;
 import com.ouroboros.auth.application.RefreshTokenService.Rotation;
 import com.ouroboros.auth.application.social.SocialIdTokenVerifier;
@@ -7,6 +8,8 @@ import com.ouroboros.auth.application.social.SocialIdentity;
 import com.ouroboros.auth.application.social.UnsupportedSocialProviderException;
 import com.ouroboros.auth.domain.PasswordPolicy;
 import com.ouroboros.auth.domain.User;
+import com.ouroboros.shared.events.Topics;
+import com.ouroboros.shared.events.UserRegisteredEvent;
 import java.time.Instant;
 import java.util.List;
 import java.util.Locale;
@@ -24,18 +27,21 @@ public class AuthService {
   private final TokenService tokenService;
   private final RefreshTokenService refreshTokenService;
   private final List<SocialIdTokenVerifier> socialVerifiers;
+  private final OutboxWriter outbox;
 
   public AuthService(
       UserRepository users,
       PasswordEncoder passwordEncoder,
       TokenService tokenService,
       RefreshTokenService refreshTokenService,
-      List<SocialIdTokenVerifier> socialVerifiers) {
+      List<SocialIdTokenVerifier> socialVerifiers,
+      OutboxWriter outbox) {
     this.users = users;
     this.passwordEncoder = passwordEncoder;
     this.tokenService = tokenService;
     this.refreshTokenService = refreshTokenService;
     this.socialVerifiers = socialVerifiers;
+    this.outbox = outbox;
   }
 
   /**
@@ -55,6 +61,7 @@ public class AuthService {
         User.local(
             UUID.randomUUID(), normalizedEmail, passwordEncoder.encode(rawPassword), Instant.now());
     users.save(user);
+    publishRegistered(user);
     return new RegisteredUser(user.getId(), user.getEmail());
   }
 
@@ -92,18 +99,18 @@ public class AuthService {
             .orElseThrow(() -> new UnsupportedSocialProviderException(provider));
     SocialIdentity identity = verifier.verify(idToken);
     String email = normalizeEmail(identity.email());
-    User user =
-        users
-            .findByEmail(email)
-            .orElseGet(
-                () ->
-                    users.save(
-                        User.social(
-                            UUID.randomUUID(),
-                            email,
-                            identity.provider(),
-                            identity.externalId(),
-                            Instant.now())));
+    User user = users.findByEmail(email).orElse(null);
+    if (user == null) {
+      user =
+          users.save(
+              User.social(
+                  UUID.randomUUID(),
+                  email,
+                  identity.provider(),
+                  identity.externalId(),
+                  Instant.now()));
+      publishRegistered(user);
+    }
     return issueTokens(user.getId(), user.getEmail());
   }
 
@@ -130,6 +137,14 @@ public class AuthService {
     String accessToken = tokenService.issueAccessToken(userId, email);
     String refreshToken = refreshTokenService.issue(userId);
     return new TokenPair(accessToken, refreshToken, tokenService.accessTokenTtlSeconds());
+  }
+
+  /** Enfileira o evento user.registered no outbox (mesma transacao da criacao do usuario). */
+  private void publishRegistered(User user) {
+    UUID eventId = UUID.randomUUID();
+    UserRegisteredEvent event =
+        new UserRegisteredEvent(eventId.toString(), user.getId(), user.getEmail(), Instant.now());
+    outbox.write(eventId, Topics.USER_REGISTERED, "User", user.getId(), event);
   }
 
   private static String normalizeEmail(String email) {
