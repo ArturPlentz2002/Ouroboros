@@ -27,6 +27,10 @@ spring:
           uri: ${SERVICE_NOTIFICATION_URI:http://localhost:8085}
           predicates:
             - Path=/api/v1/notifications/**
+        - id: service-notes
+          uri: ${SERVICE_NOTES_URI:http://localhost:8086}
+          predicates:
+            - Path=/api/v1/notes/**
       globalcors:
         cors-configurations:
           '[/**]':

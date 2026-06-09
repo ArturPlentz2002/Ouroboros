@@ -1,0 +1,26 @@
+server:
+  port: ${SERVER_PORT:8086}
+
+spring:
+  application:
+    name: service-notes
+  data:
+    mongodb:
+      # Default para dev local (compose deps); o authSource e o admin pois as
+      # credenciais root sao criadas via MONGO_INITDB_ROOT_USERNAME/PASSWORD.
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://ouroboros:ouroboros@localhost:27017/notes?authSource=admin}
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          # Valida o JWT localmente buscando a chave publica (JWKS) do service-auth.
+          jwk-set-uri: ${OUROBOROS_JWK_SET_URI:http://localhost:8081/oauth2/jwks}
+          # Exige que o token seja destinado a plataforma Ouroboros.
+          audiences:
+            - ${OUROBOROS_JWT_AUDIENCE:ouroboros}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
