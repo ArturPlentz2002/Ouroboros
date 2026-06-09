@@ -6,6 +6,7 @@ import com.ouroboros.finance.application.EntryNotFoundException;
 import com.ouroboros.shared.ApiError;
 import com.ouroboros.shared.web.AbstractApiExceptionHandler;
 import jakarta.servlet.http.HttpServletRequest;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -32,5 +33,15 @@ public class ApiExceptionHandler extends AbstractApiExceptionHandler {
   public ResponseEntity<ApiError> handleDuplicate(
       DuplicateCategoryException ex, HttpServletRequest request) {
     return build(HttpStatus.CONFLICT, ex.getMessage(), request, List.of());
+  }
+
+  @ExceptionHandler(DateTimeParseException.class)
+  public ResponseEntity<ApiError> handleBadDate(
+      DateTimeParseException ex, HttpServletRequest request) {
+    return build(
+        HttpStatus.BAD_REQUEST,
+        "Parametro de data invalido (use o formato YYYY-MM)",
+        request,
+        List.of());
   }
 }
