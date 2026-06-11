@@ -35,4 +35,18 @@ class GatewaySecurityTest {
         .expectStatus()
         .is2xxSuccessful();
   }
+
+  @Test
+  void preflightCorsDeOrigemDaRedeLocalEhPermitido() {
+    client
+        .options()
+        .uri("/api/v1/agenda/events")
+        .header("Origin", "http://192.168.68.211:8081")
+        .header("Access-Control-Request-Method", "POST")
+        .exchange()
+        .expectStatus()
+        .is2xxSuccessful()
+        .expectHeader()
+        .valueEquals("Access-Control-Allow-Origin", "http://192.168.68.211:8081");
+  }
 }
