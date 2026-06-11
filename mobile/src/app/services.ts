@@ -57,21 +57,32 @@ export interface CreateServicesOptions {
   config?: AppConfig;
   tokenStore?: TokenStore;
   fetchFn?: typeof fetch;
+  /** Chamado quando o refresh falha e a sessao e encerrada (ex.: signOut da UI). */
+  onSessionExpired?: () => void;
 }
 
 export function createServices(options: CreateServicesOptions = {}): AppServices {
   const config = options.config ?? resolveConfig();
   const tokenStore = options.tokenStore ?? createTokenStore();
   const tokenProvider = { getAccessToken: () => tokenStore.get()?.accessToken ?? null };
+
+  // Client dedicado de auth, SEM onUnauthorized: um 401 no /auth/refresh nao pode
+  // disparar outro refresh (recursao/deadlock).
+  const authClient = new ApiClient({ baseUrl: config.apiBaseUrl, fetchFn: options.fetchFn });
+  const auth = new AuthService(authClient, tokenStore);
+  auth.onSessionExpired = options.onSessionExpired;
+
   const client = new ApiClient({
     baseUrl: config.apiBaseUrl,
     tokens: tokenProvider,
     fetchFn: options.fetchFn,
   });
+  client.onUnauthorized = async () => (await auth.refresh()) !== null;
+
   return {
     config,
     tokenStore,
-    auth: new AuthService(client, tokenStore),
+    auth,
     agenda: new AgendaApi(client),
     finance: new FinanceApi(client),
     notes: new NotesApi(client),

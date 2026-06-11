@@ -16,7 +16,10 @@ const screens = { agenda: AgendaScreen, finance: FinanceScreen, notes: NotesScre
 
 /** Raiz do app: providers + restauro de sessao + header + navegacao. */
 export default function App(): React.ReactElement {
-  const services = useMemo(() => createServices(), []);
+  const services = useMemo(
+    () => createServices({ onSessionExpired: () => useSessionStore.getState().signOut() }),
+    [],
+  );
   const [queryClient] = useState(() => new QueryClient());
 
   // Restaura a sessao persistida (localStorage no alvo web) antes do primeiro render util.

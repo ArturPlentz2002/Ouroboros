@@ -29,6 +29,13 @@ export class ApiClient {
   private readonly tokens?: TokenProvider;
   private readonly fetchFn: typeof fetch;
 
+  /**
+   * Chamado quando uma resposta vem 401; se resolver `true` (credencial renovada),
+   * a chamada original e repetida uma unica vez. Ligado em `createServices` ao
+   * refresh do AuthService — que usa um client SEM este handler (evita recursao).
+   */
+  onUnauthorized?: () => Promise<boolean>;
+
   constructor(options: ApiClientOptions) {
     this.baseUrl = options.baseUrl;
     this.tokens = options.tokens;
@@ -40,6 +47,15 @@ export class ApiClient {
   }
 
   async request<T>(method: string, path: string, body?: unknown): Promise<T> {
+    return this.dispatch<T>(method, path, body, true);
+  }
+
+  private async dispatch<T>(
+    method: string,
+    path: string,
+    body: unknown,
+    mayRetry: boolean,
+  ): Promise<T> {
     const headers: Record<string, string> = { Accept: 'application/json' };
 
     const token = this.tokens?.getAccessToken();
@@ -57,6 +73,12 @@ export class ApiClient {
     const raw = await res.text();
     const data = raw ? JSON.parse(raw) : undefined;
 
+    if (res.status === 401 && mayRetry && this.onUnauthorized) {
+      const renewed = await this.onUnauthorized();
+      if (renewed) {
+        return this.dispatch<T>(method, path, body, false);
+      }
+    }
     if (!res.ok) {
       throw new ApiError(res.status, `HTTP ${res.status} em ${method} ${path}`, data);
     }
