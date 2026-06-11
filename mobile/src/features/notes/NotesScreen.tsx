@@ -87,6 +87,9 @@ export function NotesScreen(): React.ReactElement {
           loading={create.isPending}
           testID="notes-create"
         />
+        {create.isError ? (
+          <Text style={styles.error}>Não foi possível criar a nota. Tente novamente.</Text>
+        ) : null}
       </Card>
 
       {notes.isLoading ? <Text style={styles.muted}>Carregando…</Text> : null}
