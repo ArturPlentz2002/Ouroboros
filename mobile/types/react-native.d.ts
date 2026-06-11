@@ -16,7 +16,8 @@ declare module 'react-native' {
   export interface ImageStyle {
     [key: string]: unknown;
   }
-  export type StyleProp<T> = T | T[] | null | undefined | false;
+  /** Recursivo como no RN real: arrays podem conter entradas condicionais (`x && style`). */
+  export type StyleProp<T> = T | ReadonlyArray<StyleProp<T>> | null | undefined | false;
 
   export interface ViewProps {
     style?: StyleProp<ViewStyle>;
