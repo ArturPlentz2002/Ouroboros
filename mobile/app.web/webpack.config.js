@@ -31,10 +31,16 @@ module.exports = (_env, argv) => {
     },
     plugins: [
       new HtmlWebpackPlugin({ template: path.resolve(__dirname, 'index.html') }),
-      new webpack.DefinePlugin({ __DEV__: JSON.stringify(!isProd) }),
+      new webpack.DefinePlugin({
+        __DEV__: JSON.stringify(!isProd),
+        // `process` nao existe no browser; a URL da API entra como constante de build.
+        __OUROBOROS_API_URL__: JSON.stringify(process.env.OUROBOROS_API_URL ?? null),
+      }),
     ],
     devServer: {
       static: path.resolve(__dirname, 'dist'),
+      host: '0.0.0.0',
+      allowedHosts: 'all', // acesso via IP da rede local (celular/outra maquina)
       port: 8081,
       historyApiFallback: true,
     },
