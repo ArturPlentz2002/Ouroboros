@@ -12,10 +12,10 @@ export interface Captured {
 }
 
 /**
- * Cria um {@link ApiClient} com um fetch falso que devolve as respostas informadas em sequencia
- * (repetindo a ultima) e registra as chamadas. Util para testar os clientes de feature.
+ * Fetch falso que devolve as respostas informadas em sequencia (repetindo a ultima)
+ * e registra as chamadas. Base do {@link fakeHttp} e do harness de testes de telas.
  */
-export function fakeHttp(responses: FakeResponse[] = [{}]) {
+export function fakeFetch(responses: FakeResponse[] = [{}]) {
   const calls: Captured[] = [];
   let i = 0;
   const fetchFn = (async (url: unknown, init: unknown) => {
@@ -28,6 +28,12 @@ export function fakeHttp(responses: FakeResponse[] = [{}]) {
       text: async () => r.body ?? '',
     } as unknown as Response;
   }) as unknown as typeof fetch;
+  return { fetchFn, calls };
+}
+
+/** Cria um {@link ApiClient} sobre o {@link fakeFetch}. Util para testar os clientes de feature. */
+export function fakeHttp(responses: FakeResponse[] = [{}]) {
+  const { fetchFn, calls } = fakeFetch(responses);
   const client = new ApiClient({ baseUrl: 'http://gw', fetchFn });
   return { client, calls };
 }
