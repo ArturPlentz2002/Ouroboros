@@ -44,6 +44,10 @@ spring:
           '[/**]':
             allowedOriginPatterns:
               - "http://localhost:*"
+              - "http://127.0.0.1:*"
+              # app web servido pelo IP da maquina na rede local (dev em celular/outro host)
+              - "http://192.168.*:*"
+              - "http://10.*:*"
             allowedMethods:
               - "*"
             allowedHeaders:
