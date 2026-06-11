@@ -60,6 +60,9 @@ export function AgendaScreen(): React.ReactElement {
           loading={create.isPending}
           testID="agenda-create"
         />
+        {create.isError ? (
+          <Text style={styles.error}>Não foi possível criar o evento. Tente novamente.</Text>
+        ) : null}
       </Card>
 
       {events.isLoading ? <Text style={styles.muted}>Carregando…</Text> : null}

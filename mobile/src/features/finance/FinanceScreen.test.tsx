@@ -33,7 +33,7 @@ describe('FinanceScreen', () => {
     fireEvent.change(screen.getByTestId('finance-amount'), { target: { value: '-1' } });
     fireEvent.click(screen.getByTestId('finance-create'));
 
-    expect(screen.getByText('Informe um valor maior que zero')).toBeTruthy();
+    expect(screen.getByText('Valor inválido — use 150,50 (sem separador de milhar)')).toBeTruthy();
     expect(harness.calls).toHaveLength(2);
   });
 

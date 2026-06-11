@@ -34,6 +34,7 @@ export function Input({
         style={[styles.input, error ? styles.inputError : undefined]}
         value={value}
         onChangeText={onChangeText}
+        accessibilityLabel={label}
         placeholder={placeholder}
         placeholderTextColor={colors.textMuted}
         secureTextEntry={secureTextEntry}

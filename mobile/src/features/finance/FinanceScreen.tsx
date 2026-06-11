@@ -28,12 +28,12 @@ export function FinanceScreen(): React.ReactElement {
   const [formError, setFormError] = useState<string | undefined>();
 
   const submit = () => {
-    const value = Number(amount.replace(',', '.'));
-    if (!Number.isFinite(value) || value <= 0) {
-      setFormError('Informe um valor maior que zero');
+    const value = parseAmount(amount);
+    if (value === null) {
+      setFormError('Valor inválido — use 150,50 (sem separador de milhar)');
       return;
     }
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(occurredOn.trim())) {
+    if (!isValidIsoDate(occurredOn.trim())) {
       setFormError('Data inválida — use AAAA-MM-DD');
       return;
     }
@@ -114,6 +114,9 @@ export function FinanceScreen(): React.ReactElement {
           loading={create.isPending}
           testID="finance-create"
         />
+        {create.isError ? (
+          <Text style={styles.error}>Não foi possível salvar o lançamento. Tente novamente.</Text>
+        ) : null}
       </Card>
 
       {entries.isLoading ? <Text style={styles.muted}>Carregando…</Text> : null}
@@ -149,6 +152,31 @@ export function FinanceScreen(): React.ReactElement {
 
 function formatMoney(value: number): string {
   return `R$ ${value.toFixed(2).replace('.', ',')}`;
+}
+
+/**
+ * Valor monetario digitado: inteiro ou com ate 2 casas (virgula ou ponto).
+ * Rejeita separador de milhar — "1.000" viraria 1 via Number() e corromperia o dado.
+ */
+export function parseAmount(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^\d+([.,]\d{1,2})?$/.test(trimmed)) {
+    return null;
+  }
+  const value = Number(trimmed.replace(',', '.'));
+  return value > 0 ? value : null;
+}
+
+/** Data de calendario valida no formato AAAA-MM-DD (rejeita 2026-13-45). */
+export function isValidIsoDate(text: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    return false;
+  }
+  const [year, month, day] = text.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return (
+    date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day
+  );
 }
 
 const styles = StyleSheet.create({
