@@ -60,7 +60,7 @@ function serveStatic(req, res) {
         if (e2) {
           res.writeHead(404).end('not found');
         } else {
-          res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-cache' });
+          res.writeHead(200, { 'Content-Type': TYPES['.html'], 'Cache-Control': 'no-store, no-cache, must-revalidate' });
           res.end(html);
         }
       });
@@ -68,7 +68,7 @@ function serveStatic(req, res) {
     }
     res.writeHead(200, {
       'Content-Type': TYPES[path.extname(file)] || 'application/octet-stream',
-      'Cache-Control': 'no-cache',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
     });
     res.end(data);
   });
