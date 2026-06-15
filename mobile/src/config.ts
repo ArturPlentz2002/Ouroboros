@@ -28,14 +28,13 @@ function buildTimeApiUrl(): string | undefined {
 }
 
 /**
- * No browser, assume o gateway no mesmo host da pagina (porta 8080) — assim o
- * app servido via IP da rede local (ex.: http://192.168.x.y:8081) fala com o
- * gateway certo sem configuracao. Fora do browser, localhost.
+ * No browser, usa a MESMA origem da pagina (base vazia → caminhos relativos como
+ * `/auth/login`). O servidor web (app.web/serve.js) faz proxy de `/auth` e `/api`
+ * para o gateway, entao o navegador fala com uma unica porta: funciona em
+ * localhost, no IP da rede local e em qualquer dispositivo, sem CORS e sem
+ * depender da porta do gateway estar acessivel. Fora do browser, localhost.
  */
 function defaultApiBaseUrl(): string {
-  const location = (globalThis as { location?: { protocol: string; hostname: string } }).location;
-  if (location?.hostname) {
-    return `${location.protocol}//${location.hostname}:8080`;
-  }
-  return 'http://localhost:8080';
+  const hasWindow = typeof window !== 'undefined' && !!window.location;
+  return hasWindow ? '' : 'http://localhost:8080';
 }

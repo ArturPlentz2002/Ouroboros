@@ -11,17 +11,17 @@ describe('resolveConfig', () => {
     );
   });
 
-  it('no browser, assume o gateway no mesmo host da pagina (porta 8080)', () => {
-    const g = globalThis as { location?: { protocol: string; hostname: string } };
-    const original = g.location;
-    g.location = { protocol: 'http:', hostname: '192.168.68.211' };
+  it('no browser, usa a mesma origem (base vazia → caminhos relativos, proxy no servidor)', () => {
+    const g = globalThis as { window?: unknown };
+    const original = g.window;
+    g.window = { location: { protocol: 'http:', hostname: '192.168.1.6' } };
     try {
-      expect(resolveConfig({}).apiBaseUrl).toBe('http://192.168.68.211:8080');
+      expect(resolveConfig({}).apiBaseUrl).toBe('');
     } finally {
       if (original === undefined) {
-        delete g.location;
+        delete g.window;
       } else {
-        g.location = original;
+        g.window = original;
       }
     }
   });
